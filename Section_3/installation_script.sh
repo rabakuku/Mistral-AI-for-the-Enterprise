@@ -8,10 +8,20 @@
     exit 0
     fi    
 
+
+
+echo "✅ Installation of ollama!" 
+curl -fsSL https://ollama.com/install.sh | sh
+# What it does: Downloads and executes the official Ollama installation script, 
+# which sets up the background service and CLI.
+sudo systemctl enable ollama.service
+sudo systemctl start ollama.service
+ollama run mistral
+echo "✅ Installation of ollama is Complete!" 
+
+
 echo "✅ Installation of Conda"    
 # 1. Connect to your Sovereign AI Engine
-gcloud compute ssh sovereign-ai-engine --zone=us-central1-a
-
 # 2. Download and install Miniconda
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
@@ -68,13 +78,3 @@ echo "Status:     systemctl status vllm"
 echo "------------------------------------------------"
 echo "✅ Installation of vllm.service is Complete!"   
 
-
-
-echo "✅ Installation of ollama!" 
-curl -fsSL https://ollama.com/install.sh | sh
-# What it does: Downloads and executes the official Ollama installation script, 
-# which sets up the background service and CLI.
-sudo systemctl enable ollama.service
-sudo systemctl start ollama.service
-ollama run mistral
-echo "✅ Installation of ollama is Complete!" 
