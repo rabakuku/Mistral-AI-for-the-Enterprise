@@ -106,7 +106,5 @@ resource "google_compute_instance" "ai_engine" {
     chmod +x installation_script.sh
     ./installation_script.sh
 
-
-
   EOT
 }
