@@ -102,7 +102,7 @@ resource "google_compute_instance" "ai_engine" {
   metadata_startup_script = <<-EOT
     #! /bin/bash
 
-    wget "https://raw.githubusercontent.com/rabakuku/OSCP-for-AI/refs/heads/main/Section%200%3A%20Lab%20Code%20%F0%9F%A7%AA/Terraform/installation_script.sh"
+    wget "https://raw.githubusercontent.com/rabakuku/Mistral-AI-for-the-Enterprise/refs/heads/main/Section_3/installation_script.sh"
     chmod +x installation_script.sh
     ./installation_script.sh
 
