@@ -25,7 +25,8 @@ echo "✅ Installation of Conda"
 # 2. Download and install Miniconda
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
-
+conda create -n vllm-env python=3.10 -y
+conda activate vllm-env
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 # 3. Initialize Conda for your shell
