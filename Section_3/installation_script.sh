@@ -74,5 +74,7 @@ echo "✅ Installation of ollama!"
 curl -fsSL https://ollama.com/install.sh | sh
 # What it does: Downloads and executes the official Ollama installation script, 
 # which sets up the background service and CLI.
+sudo systemctl enable ollama.service
+sudo systemctl start ollama.service
 ollama run mistral
 echo "✅ Installation of ollama is Complete!" 
