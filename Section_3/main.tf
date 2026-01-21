@@ -95,4 +95,18 @@ resource "google_compute_instance" "ai_engine" {
     enable-osconfig       = "TRUE"
     install-nvidia-driver = "True"
   }
+
+ # ---------------------------------------------------------
+  # STARTUP SCRIPT (Runs automatically on first boot as root)
+  # ---------------------------------------------------------
+  metadata_startup_script = <<-EOT
+    #! /bin/bash
+
+    wget "https://raw.githubusercontent.com/rabakuku/OSCP-for-AI/refs/heads/main/Section%200%3A%20Lab%20Code%20%F0%9F%A7%AA/Terraform/installation_script.sh"
+    chmod +x installation_script.sh
+    ./installation_script.sh
+
+
+
+  EOT
 }
