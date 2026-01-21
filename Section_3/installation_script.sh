@@ -24,3 +24,55 @@ conda init bash
 source ~/.bashrc
 
 echo "✅ Installation of Conda is Complete!"
+
+
+
+echo "✅ Installation of vllm.service"    
+CONDA_PATH="$HOME/miniconda3/envs/vllm-env/bin/python3"
+SERVICE_FILE="/etc/systemd/system/vllm.service"
+
+echo "🛡️  Sovereign AI Service Architect"
+echo "[*] Creating systemd service the vllm.service "
+
+# 2. Write the service file using sudo
+sudo bash -c "cat <<EOF > $SERVICE_FILE
+[Unit]
+Description=vLLM Sovereign AI Engine
+After=network.target nvidia-persistenced.service
+
+[Service]
+WorkingDirectory=$HOME
+ExecStart=$CONDA_PATH -m vllm.entrypoints.openai.api_server \\
+    --model mistralai/Mistral-7B-Instruct-v0.3 \\
+    --gpu-memory-utilization 0.9 \\
+    --max-model-len 4096 \\
+    --port 8000
+Restart=always
+RestartSec=10
+Environment=\"CUDA_VISIBLE_DEVICES=0\"
+
+[Install]
+WantedBy=multi-user.target
+EOF"
+
+# 3. Finalize and Start
+echo "[*] Reloading systemd and starting service..."
+sudo systemctl daemon-reload
+sudo systemctl enable vllm
+sudo systemctl start vllm
+
+echo "------------------------------------------------"
+echo "✅ SUCCESS: vLLM is now running as a background service."
+echo "View logs:  journalctl -u vllm -f"
+echo "Status:     systemctl status vllm"
+echo "------------------------------------------------"
+echo "✅ Installation of vllm.service is Complete!"   
+
+
+
+echo "✅ Installation of ollama!" 
+curl -fsSL https://ollama.com/install.sh | sh
+# What it does: Downloads and executes the official Ollama installation script, 
+# which sets up the background service and CLI.
+ollama run mistral
+echo "✅ Installation of ollama is Complete!" 
