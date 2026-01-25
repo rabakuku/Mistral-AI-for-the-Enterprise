@@ -1,4 +1,4 @@
-### **Why vLLM is the "Gold Standard" for Serving** 🏎️
+**Why vLLM is the "Gold Standard" for Serving** 🏎️
 
 While you might be tempted to just run a simple Python script, **vLLM** is fundamentally different from standard inference. It uses a revolutionary algorithm called **PagedAttention**, which manages GPU memory almost like an operating system manages RAM, preventing "memory fragmentation." This allows the engine to handle multiple user requests simultaneously without slowing down or crashing. In a professional environment, vLLM provides significantly higher throughput than standard setups, making it the superior choice for enterprise-grade applications. By mastering vLLM, you are learning how to deploy AI in a way that is actually scalable in the real world.
 
@@ -109,36 +109,4 @@ journalctl -u vllm -f
 
 ```
 
-
-
-
-### **Terraform Update: Persistence & Monitoring** 🏗️
-
-To make this truly professional, let's update your `main.tf` to ensure the GPU doesn't "fall asleep" when it's not in use.
-
-Terraform
-
-```javascript
-# 5. NVIDIA Persistence Daemon: The "Always Awake" Policy
-# This ensures the NVIDIA L4 driver stays initialized even when no one is chatting.
-# This prevents a 2-3 second 'wake up' delay for the first user of the day.
-resource "google_compute_resource_policy" "gpu_persistence" {
-  name   = "gpu-persistence-policy"
-  region = var.region
-
-  instance_schedule_policy {
-    vm_start_schedule {
-      schedule = "0 8 * * *" # Start at 8 AM UTC
-    }
-    time_zone = "UTC"
-  }
-}
-
-# 6. Metadata Update for vLLM
-# We add a flag to ensure the OS-Config agent is ready to monitor our new service.
-metadata = {
-  enable-osconfig = "TRUE"
-  vllm-port      = "8000"
-}
-
-```
+### 
