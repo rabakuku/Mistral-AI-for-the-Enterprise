@@ -1,0 +1,19 @@
+[Unit]
+Description=Sovereign AI Streamlit Interface
+After=network.target vllm.service
+
+[Service]
+# We run from the project root so the app can find /data and /chroma_db
+WorkingDirectory=/sovereign-ai
+
+# ExecStart launches Streamlit through our specific Conda Python path
+# We use port 8501, which is the default for Streamlit
+ExecStart=/miniconda3/envs/vllm-env/bin/python3 -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+
+# If the app crashes, Linux will wait 5 seconds and try to bring it back to life
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF"
