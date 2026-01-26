@@ -28,7 +28,7 @@ resource "google_compute_firewall" "allow_my_ip" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "8000", "11434", "8501"]
+    ports    = ["22", "8000", "11434", "8501", "8502"]
   }
 
   source_ranges = [var.my_ip]
