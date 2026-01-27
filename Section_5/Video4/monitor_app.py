@@ -4,19 +4,32 @@ import yaml
 from yaml.loader import SafeLoader
 import subprocess
 import time
+import os
 
-# --- 1. SECURE SECRETS LOADING ---
+# --- 1. CORE WIDESCREEN CONFIGURATION ---
+# layout="wide" forces the app to use the full browser width
+st.set_page_config(
+    page_title="Sovereign AI Command Center",
+    page_icon="🛡️",
+    layout="wide", 
+    initial_sidebar_state="collapsed"
+)
+
+# --- 2. INITIALIZE PLACEHOLDERS ---
+login_placeholder = st.empty()
+
+# --- 3. SECURE SECRETS LOADING ---
 try:
-    with open('secrets.yaml') as file:
+    with open('/sovereign-ai/secrets.yaml') as file:
         config = yaml.load(file, Loader=SafeLoader)
     
-    # DYNAMIC DETECTION: Get the first username found in the file
+    # Auto-detect the current username from the YAML
     detected_username = list(config['credentials']['usernames'].keys())[0]
 except (FileNotFoundError, IndexError, KeyError):
     st.error("Credential file missing! Run 'update_secrets.py' first.")
     st.stop()
 
-# --- 2. INITIALIZE AUTHENTICATOR ---
+# --- 4. INITIALIZE AUTHENTICATOR ---
 authenticator = stauth.Authenticate(
     config['credentials'],
     'sovereign_cookie',
@@ -24,12 +37,11 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=1
 )
 
-# --- 3. STEALTH LOGIN LOGIC ---
-# Pre-fill the session state with the DETECTED username
+# --- 5. STEALTH LOGIN UI ---
 if 'username' not in st.session_state:
     st.session_state['username'] = detected_username 
 
-# CSS Hack to hide the username field
+# CSS Hack to hide the username input for a "Password-Only" experience
 st.markdown("""
     <style>
     div[data-testid="stTextInput"] > label:contains("Username") ,
@@ -39,17 +51,17 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# FIX: In v0.4.x, the first argument is 'location'. 
-# We use keyword arguments to be 100% safe.
-authenticator.login(location='main')
+with login_placeholder.container():
+    authenticator.login(location='main')
 
-# --- 4. CHECK AUTHENTICATION STATUS ---
-# The status is now stored directly in st.session_state
+# --- 6. DASHBOARD LOGIC (AUTHENTICATED) ---
 if st.session_state.get('authentication_status'):
-    login_placeholder.empty()
+    login_placeholder.empty() 
+    
     st.title("🛡️ Sovereign AI Command Center")
+    st.info(f"Session Active: {st.session_state['name']}")
 
-    # --- 1. NEW TABBED NAVIGATION ---
+    # Tabbed Navigation
     tab1, tab2 = st.tabs(["📟 System Logs", "🕵️ Security Vault"])
 
     with tab1:
@@ -62,25 +74,52 @@ if st.session_state.get('authentication_status'):
             st.rerun()
 
     with tab2:
-        st.subheader("Vulnerability Scan Reports")
-        REPORT_DIR = "/sovereign-ai/reports"
+        st.subheader("🕵️ Advanced Giskard Security Audit")
         
-        # Trigger a new scan
-        if st.button("🚀 Run Full Security Audit"):
-            with st.spinner("Red Teaming the Engine..."):
-                subprocess.run(["/miniconda3/envs/vllm-env/bin/python3", "/sovereign-ai/scanner.py"])
-            st.success("Audit Complete! See reports below.")
+        # FIXED: Corrected the string literals here
+        audit_mode = st.selectbox("Select Audit Target", [
+            "Hallucination Only (Fast)", 
+            "Prompt Injection & Jailbreaking", 
+            "Information Disclosure",
+            "Full Security Deep Audit (Slow)"
+        ])
+        
+        mode_map = {
+            "Hallucination Only (Fast)": "1",
+            "Prompt Injection & Jailbreaking": "2",
+            "Information Disclosure": "3",
+            "Full Security Deep Audit (Slow)": "4"
+        }
+        
+        if st.button("🚀 Execute Giskard Scan"):
+            selected_mode = mode_map[audit_mode]
+            with st.spinner(f"Giskard is probing for {audit_mode}..."):
+                subprocess.run([
+                    "/miniconda3/envs/vllm-env/bin/python3", 
+                    "/sovereign-ai/scanner.py", 
+                    selected_mode
+                ])
+            st.success("Audit Complete!")
 
-        # List and View Reports
-        reports = sorted([f for f in os.listdir(REPORT_DIR) if f.endswith(".html")], reverse=True)
-        if reports:
-            selected_report = st.selectbox("Select a Report to View", reports)
-            if selected_report:
-                with open(os.path.join(REPORT_DIR, selected_report), 'r') as f:
-                    html_data = f.read()
-                st.components.v1.html(html_data, height=600, scrolling=True)
-        else:
-            st.warning("No security reports found. Run an audit to generate one.")
+        # Report Viewer
+        REPORT_DIR = "/sovereign-ai/reports"
+        if os.path.exists(REPORT_DIR):
+            reports = sorted([f for f in os.listdir(REPORT_DIR) if f.endswith(".html")], reverse=True)
+            if reports:
+                selected_report = st.selectbox("Select Audit Report", reports)
+                if selected_report:
+                    with open(os.path.join(REPORT_DIR, selected_report), 'r') as f:
+                        html_data = f.read()
+                    # Height increased for better widescreen viewing
+                    st.components.v1.html(html_data, height=1200, scrolling=True)
+            else:
+                st.warning("No reports found. Run a scan to generate your first audit.")
 
+    # Periodic UI refresh
     time.sleep(10)
     st.rerun()
+
+elif st.session_state.get('authentication_status') is False:
+    st.error('Access Denied: Invalid Key')
+else:
+    st.warning('Please enter your Sovereign Access Key to proceed.')
