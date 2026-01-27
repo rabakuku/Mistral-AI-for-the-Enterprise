@@ -6,16 +6,14 @@ import subprocess
 import time
 
 # --- 1. SECURE SECRETS LOADING ---
-# We load the file and automatically find the current username
 try:
     with open('secrets.yaml') as file:
         config = yaml.load(file, Loader=SafeLoader)
     
     # DYNAMIC DETECTION: Get the first username found in the file
-    # This replaces the hardcoded 'admin_user' from before!
     detected_username = list(config['credentials']['usernames'].keys())[0]
 except (FileNotFoundError, IndexError, KeyError):
-    st.error("Credential file missing or corrupted! Run 'update_secrets.py' first.")
+    st.error("Credential file missing! Run 'update_secrets.py' first.")
     st.stop()
 
 # --- 2. INITIALIZE AUTHENTICATOR ---
@@ -27,7 +25,11 @@ authenticator = stauth.Authenticate(
 )
 
 # --- 3. STEALTH LOGIN LOGIC ---
-# Hide the username field via CSS
+# Pre-fill the session state with the DETECTED username
+if 'username' not in st.session_state:
+    st.session_state['username'] = detected_username 
+
+# CSS Hack to hide the username field
 st.markdown("""
     <style>
     div[data-testid="stTextInput"] > label:contains("Username") ,
@@ -37,33 +39,30 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Pre-fill the session state with the DETECTED username
-if 'username' not in st.session_state:
-    st.session_state['username'] = detected_username 
+# FIX: In v0.4.x, the first argument is 'location'. 
+# We use keyword arguments to be 100% safe.
+authenticator.login(location='main')
 
-login_placeholder = st.empty()
-
-with login_placeholder.container():
-    # The user only sees the 'Access Key' (password) input
-    name, authentication_status, username = authenticator.login('Enter Access Key', 'main')
-
-if authentication_status:
-    login_placeholder.empty() # Erase the login box upon success
-    
-    # --- 4. COMMAND CENTER DASHBOARD ---
+# --- 4. CHECK AUTHENTICATION STATUS ---
+# The status is now stored directly in st.session_state
+if st.session_state.get('authentication_status'):
+    # Success! Clear the login UI and show the dashboard
     st.title("🛡️ Sovereign AI Command Center")
-    st.info(f"Session Active: {name}")
+    st.info(f"Session Active: {st.session_state['name']}")
 
     def get_logs():
-        # Merged journalctl stream for UI and vLLM
+        # Grabbing logs from the system
         cmd = "sudo journalctl -u sovereign-ui.service -u vllm.service -n 50 --no-hostname --output=short-precise"
         return subprocess.run(cmd.split(), capture_output=True, text=True).stdout
 
     st.code(get_logs(), language="bash")
     
-    # Auto-Refresh to maintain the 'Live' feeling
+    # Auto-Refresh loop
     time.sleep(5)
     st.rerun()
 
-elif authentication_status == False:
+elif st.session_state.get('authentication_status') is False:
     st.error('Access Denied: Invalid Key')
+else:
+    # This state means the user hasn't tried to log in yet
+    st.warning('Please enter your Access Key to continue.')
