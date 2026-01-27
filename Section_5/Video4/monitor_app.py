@@ -46,23 +46,41 @@ authenticator.login(location='main')
 # --- 4. CHECK AUTHENTICATION STATUS ---
 # The status is now stored directly in st.session_state
 if st.session_state.get('authentication_status'):
-    # Success! Clear the login UI and show the dashboard
+    login_placeholder.empty()
     st.title("🛡️ Sovereign AI Command Center")
-    st.info(f"Session Active: {st.session_state['name']}")
 
-    def get_logs():
-        # Grabbing logs from the system
-        cmd = "sudo journalctl -u sovereign-ui.service -u vllm.service -n 50 --no-hostname --output=short-precise"
-        return subprocess.run(cmd.split(), capture_output=True, text=True).stdout
+    # --- 1. NEW TABBED NAVIGATION ---
+    tab1, tab2 = st.tabs(["📟 System Logs", "🕵️ Security Vault"])
 
-    st.code(get_logs(), language="bash")
-    
-    # Auto-Refresh loop
-    time.sleep(5)
+    with tab1:
+        st.subheader("Live System Telemetry")
+        def get_logs():
+            cmd = "sudo journalctl -u sovereign-ui.service -u vllm.service -n 50 --no-hostname --output=short-precise"
+            return subprocess.run(cmd.split(), capture_output=True, text=True).stdout
+        st.code(get_logs(), language="bash")
+        if st.button("Refresh Logs"):
+            st.rerun()
+
+    with tab2:
+        st.subheader("Vulnerability Scan Reports")
+        REPORT_DIR = "/sovereign-ai/reports"
+        
+        # Trigger a new scan
+        if st.button("🚀 Run Full Security Audit"):
+            with st.spinner("Red Teaming the Engine..."):
+                subprocess.run(["/miniconda3/envs/vllm-env/bin/python3", "/sovereign-ai/scanner.py"])
+            st.success("Audit Complete! See reports below.")
+
+        # List and View Reports
+        reports = sorted([f for f in os.listdir(REPORT_DIR) if f.endswith(".html")], reverse=True)
+        if reports:
+            selected_report = st.selectbox("Select a Report to View", reports)
+            if selected_report:
+                with open(os.path.join(REPORT_DIR, selected_report), 'r') as f:
+                    html_data = f.read()
+                st.components.v1.html(html_data, height=600, scrolling=True)
+        else:
+            st.warning("No security reports found. Run an audit to generate one.")
+
+    time.sleep(10)
     st.rerun()
-
-elif st.session_state.get('authentication_status') is False:
-    st.error('Access Denied: Invalid Key')
-else:
-    # This state means the user hasn't tried to log in yet
-    st.warning('Please enter your Access Key to continue.')
