@@ -1,0 +1,12 @@
+[Unit]
+Description=Sovereign AI Monitoring WebGUI
+After=sovereign-ui.service
+
+[Service]
+WorkingDirectory=/sovereign-ai
+ExecStart=/miniconda3/envs/vllm-env/bin/python3 -m streamlit run monitor_app.py --server.port 8502 --server.address 0.0.0.0
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
